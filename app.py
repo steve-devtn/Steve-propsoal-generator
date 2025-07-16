@@ -1,32 +1,47 @@
 import streamlit as st
 from openai import OpenAI
-from io import BytesIO
-from docx import Document
+import streamlit_authenticator as stauth
 
-client = OpenAI(api_key=st.secrets["openai"]["api_key"])
+# User credentials (example)
+users = {
+    "hyper": {
+        "name": "Hyper",
+        "password": "hashed_password_here"  # use stauth.Hasher to hash your password
+    }
+}
 
-st.set_page_config(page_title="Steve Proposal Generator", layout="centered")
+# Hashed passwords example (generate once)
+# import streamlit_authenticator as stauth
+# hashed_passwords = stauth.Hasher(['your_password']).generate()
+# print(hashed_passwords)
 
-st.title("Steve Proposal Generator")
-st.subheader("Generate personalized freelance proposals with AI")
+# Setup authenticator
+authenticator = stauth.Authenticate(
+    users,
+    "steve_proposal_generator",
+    "abcdef",  # cookie key
+    cookie_expiry_days=30
+)
 
-# Input fields in two columns
-col1, col2 = st.columns(2)
-with col1:
+name, authentication_status, username = authenticator.login("Login", "main")
+
+if authentication_status:
+    client = OpenAI(api_key=st.secrets["openai"]["api_key"])
+    st.set_page_config(page_title="Steve Proposal Generator", layout="centered")
+    st.title(f"Welcome {name}")
+    st.subheader("Generate personalized freelance proposals with AI")
+
     client_name = st.text_input("Client's Name (optional)")
     project_budget = st.text_input("Project Budget (optional)")
-with col2:
     timeline = st.text_input("Project Timeline (optional)")
     style = st.selectbox("Proposal Style", ["Formal", "Casual", "Technical", "Persuasive"])
+    job_description = st.text_area("Paste the job description here:")
 
-job_description = st.text_area("Paste the job description here:")
-
-# Session state for history
-if "history" not in st.session_state:
-    st.session_state.history = []
-
-def generate_prompt():
-    return f"""
+    if st.button("Generate Proposal"):
+        if not job_description.strip():
+            st.warning("Please enter a job description.")
+        else:
+            prompt = f"""
 You are a professional freelancer writing a {style.lower()} proposal.
 
 Job description: {job_description}
@@ -38,72 +53,26 @@ Project timeline: {timeline or 'N/A'}
 Write a friendly, confident, and professional proposal addressing these details.
 Keep it clear and persuasive.
 """
+            with st.spinner("Generating proposal..."):
+                try:
+                    response = client.chat.completions.create(
+                        model="gpt-3.5-turbo",
+                        messages=[
+                            {"role": "system", "content": "You are a professional freelancer writing proposals."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.7,
+                        max_tokens=400,
+                    )
+                    proposal = response.choices[0].message.content.strip()
+                    st.success("✅ Proposal generated")
+                    st.text_area("Your Proposal", value=proposal, height=300)
+                except Exception as e:
+                    st.error(f"❌ Error generating proposal: {e}")
 
-def proposal_to_docx(text):
-    doc = Document()
-    for line in text.split('\n'):
-        doc.add_paragraph(line)
-    f = BytesIO()
-    doc.save(f)
-    return f.getvalue()
+    authenticator.logout("Logout", "sidebar")
 
-def proposal_to_txt(text):
-    return text.encode('utf-8')
-
-proposal = ""
-
-if st.button("Generate Proposal"):
-    if not job_description.strip():
-        st.warning("Please enter a job description.")
-    else:
-        with st.spinner("Generating proposal..."):
-            try:
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "system", "content": "You are a professional freelancer writing proposals."},
-                        {"role": "user", "content": generate_prompt()}
-                    ],
-                    temperature=0.7,
-                    max_tokens=400,
-                )
-                proposal = response.choices[0].message.content.strip()
-                st.success("✅ Proposal generated")
-                st.session_state.history.append(proposal)
-            except Exception as e:
-                st.error(f"❌ Error generating proposal: {e}")
-
-if proposal:
-    st.markdown("---")
-    st.markdown("### Generated Proposal:")
-    st.markdown(proposal)
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        if st.button("Copy to Clipboard"):
-            st.experimental_set_query_params()
-            st.toast("Copied to clipboard!")
-            # Clipboard copy only works in the frontend. Use workaround or extensions if needed.
-
-    with col2:
-        st.download_button(
-            label="Download as DOCX",
-            data=proposal_to_docx(proposal),
-            file_name="proposal.docx",
-            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        )
-    with col3:
-        st.download_button(
-            label="Download as TXT",
-            data=proposal_to_txt(proposal),
-            file_name="proposal.txt",
-            mime="text/plain"
-        )
-
-if st.session_state.history:
-    st.markdown("---")
-    st.markdown("### Proposal History")
-    for i, p in enumerate(reversed(st.session_state.history[-5:]), 1):
-        st.markdown(f"**#{i}**:")
-        st.markdown(p)
+elif authentication_status is False:
+    st.error("Username/password is incorrect")
+elif authentication_status is None:
+    st.warning("Please enter your username and password")
