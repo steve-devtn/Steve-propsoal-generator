@@ -28,4 +28,10 @@ Based on your request, here’s what I can offer:
 ✅ Fast delivery and unlimited revisions  
 ✅ 100% satisfaction guaranteed
 
-Let’s
+Let’s get started — I’m ready when you are!
+
+Best regards,  
+Steve
+"""
+        st.success("✅ Proposal generated!")
+        st.code(proposal, language="markdown")
