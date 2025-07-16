@@ -1,21 +1,14 @@
 import streamlit as st
 
-def generate_proposal(gig_title: str) -> str:
-    return f"""Hello,
-
-I’m very interested in your project: "{gig_title}".
-With my experience and skills, I guarantee quality, on-time delivery, and clear communication.
-Let’s discuss your requirements and get started!
-
-Best regards,
-Steve
-"""
+st.set_page_config(page_title="Steve Proposal Generator", layout="centered")
 
 st.title("Steve Proposal Generator")
+st.subheader("Generate freelance proposals automatically")
 
-gig_title = st.text_input("Enter Fiverr gig title:")
-
-if gig_title:
-    proposal = generate_proposal(gig_title)
-    st.subheader("Generated Proposal:")
-    st.write(proposal)
+job_description = st.text_area("Paste the job description here:")
+if st.button("Generate Proposal"):
+    if job_description.strip():
+        st.success("✅ Proposal generated (placeholder)")
+        st.text("Dear client, ... [AI will generate this part]")
+    else:
+        st.warning("Please paste a job description.")
