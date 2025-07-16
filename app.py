@@ -24,6 +24,15 @@ Thank you for your interest in my {gig_type.lower()} services.
 
 Based on your request, here’s what I can offer:
 
+from datetime import datetime
+
+if submit:
+    ...
+    # Save to file
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    with open(f"proposals/proposal_{timestamp}.txt", "w") as f:
+        f.write(proposal)
+
 ✅ High-quality, customized {gig_type.lower()}  
 ✅ Fast delivery and unlimited revisions  
 ✅ 100% satisfaction guaranteed
@@ -35,3 +44,12 @@ Steve
 """
         st.success("✅ Proposal generated!")
         st.code(proposal, language="markdown")
+
+from datetime import datetime
+
+if submit:
+    ...
+    # Save to file
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    with open(f"proposals/proposal_{timestamp}.txt", "w") as f:
+        f.write(proposal)
