@@ -1,6 +1,5 @@
 import streamlit as st
 from openai import OpenAI
-import markdown
 from io import BytesIO
 from docx import Document
 
