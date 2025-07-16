@@ -1,3 +1,6 @@
+import openai
+openai.api_key = st.secrets["openai"]["api_key"]
+
 import streamlit as st
 
 st.set_page_config(page_title="Steve Proposal Generator", layout="centered")
@@ -12,3 +15,6 @@ if st.button("Generate Proposal"):
         st.text("Dear client, ... [AI will generate this part]")
     else:
         st.warning("Please paste a job description.")
+
+
+set OpenAI key
